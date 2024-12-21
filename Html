@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMI ID Lookup Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        #response {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #ffffff;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .spinner-border {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card p-4 shadow-sm">
+            <h1 class="text-center text-primary">IMI ID Lookup Dashboard</h1>
+            <p class="text-center text-muted">Enter a patient IMI ID to fetch details from the server.</p>
+            <form id="lookupForm" class="mt-4">
+                <div class="mb-3">
+                    <label for="imiId" class="form-label">Patient IMI ID</label>
+                    <input type="text" id="imiId" class="form-control" placeholder="Enter IMI ID" required>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">Fetch Data</button>
+                </div>
+            </form>
+            <div class="text-center mt-3">
+                <div class="spinner-border text-primary" role="status" id="loadingSpinner">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+        <div id="responseContainer" class="mt-4" style="display: none;">
+            <h3 class="text-success">Response</h3>
+            <div id="response"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+document.getElementById('lookupForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const imiId = document.getElementById('imiId').value.trim();
+    const responseContainer = document.getElementById('response');
+    const responseCard = document.getElementById('responseContainer');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    responseCard.style.display = 'none';
+    loadingSpinner.style.display = 'block';
+
+    try {
+        const response = await fetch('<YOUR_GKE_ENDPOINT>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ imiId: imiId }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server Error: ${response.statusText} (${response.status})`);
+        }
+
+        const data = await response.json();
+        responseContainer.textContent = JSON.stringify(data, null, 2);
+        responseCard.style.display = 'block';
+    } catch (error) {
+        responseContainer.textContent = `Error: ${error.message}`;
+        responseCard.style.display = 'block';
+    } finally {
+        loadingSpinner.style.display = 'none';
+    }
+});
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient IMI ID Lookup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 20px;
+        }
+        #response {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Patient IMI ID Lookup</h1>
+        <form id="lookupForm" class="mt-4">
+            <div class="mb-3">
+                <label for="imiId" class="form-label">Enter Patient IMI ID</label>
+                <input type="text" id="imiId" class="form-control" placeholder="Enter IMI ID" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Fetch Response</button>
+        </form>
+        <div id="responseContainer" class="mt-4">
+            <h3>Response</h3>
+            <div id="response"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+document.getElementById('lookupForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const imiId = document.getElementById('imiId').value;
+    const responseContainer = document.getElementById('response');
+
+    // Clear previous response
+    responseContainer.textContent = "Fetching data...";
+
+    try {
+        const response = await fetch('<YOUR_GKE_ENDPOINT>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ imiId: imiId }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        responseContainer.textContent = JSON.stringify(data, null, 2);
+    } catch (error) {
+        responseContainer.textContent = `Error fetching data: ${error.message}`;
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
