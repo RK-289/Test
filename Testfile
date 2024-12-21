@@ -1,0 +1,49 @@
+document.getElementById('lookupForm').addEventListener('submit', async function (event) {
+    event.preventDefault(); // Prevent default form submission behavior
+
+    // Get input value
+    const imiId = document.getElementById('imiId').value.trim();
+    const responseContainer = document.getElementById('response');
+    const responseCard = document.getElementById('responseContainer');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    // Clear previous response and show the spinner
+    responseCard.style.display = 'none';
+    loadingSpinner.style.display = 'block';
+
+    console.log(`Sending request to endpoint with IMI ID: ${imiId}`);
+
+    try {
+        const response = await fetch('<YOUR_ENDPOINT>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ imiId: imiId }), // Pass the IMI ID in the request body
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        // Check if the request was successful
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json(); // Parse JSON response
+        console.log('Response data:', data);
+
+        // Display the response on the UI
+        responseContainer.textContent = JSON.stringify(data, null, 2);
+        responseCard.style.display = 'block';
+    } catch (error) {
+        console.error('Error occurred:', error);
+
+        // Display error message on the UI
+        responseContainer.textContent = `Error: ${error.message}`;
+        responseCard.style.display = 'block';
+    } finally {
+        // Hide the spinner after processing
+        loadingSpinner.style.display = 'none';
+    }
+});
