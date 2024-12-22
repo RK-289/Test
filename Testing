@@ -1,0 +1,40 @@
+document.getElementById('lookupForm').addEventListener('submit', async function (event) {
+    event.preventDefault(); // Prevent default form submission behavior
+
+    const imiId = document.getElementById('imiId').value.trim();
+    const responseContainer = document.getElementById('response');
+    const responseCard = document.getElementById('responseContainer');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    // Clear previous response and show the spinner
+    responseCard.style.display = 'none';
+    loadingSpinner.style.display = 'block';
+
+    // Use a public CORS proxy
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const apiUrl = 'https://cdr-caseprep.dev.cvshealth.com/get-decoded-text';
+
+    try {
+        const response = await fetch(proxyUrl + apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ Imiid: imiId }), // Match the Postman request format
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json(); // Parse JSON response
+        responseContainer.textContent = JSON.stringify(data, null, 2);
+        responseCard.style.display = 'block';
+    } catch (error) {
+        console.error('Error occurred:', error);
+        responseContainer.textContent = `Error: ${error.message}`;
+        responseCard.style.display = 'block';
+    } finally {
+        loadingSpinner.style.display = 'none'; // Hide spinner
+    }
+});
