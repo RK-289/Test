@@ -1,0 +1,21 @@
+%%{init: {'theme': 'neutral'}}%%
+flowchart TD
+    A[User 1: Submit GCS URI] --> B[Cloud Function]
+    A2[User 2: Submit GCS URI] --> B
+    B --> C[Process FHIR Data]
+    C --> D[Split into Batches (1M tokens each)]
+    D --> E[Write JSONL to GCS]
+    E --> F[Publish Batch Metadata to Pub/Sub]
+    F --> G[Cloud Run Service]
+    G --> H{Check Firestore\nTokens + Batch Tokens ≤ 300M?}
+    H -->|Yes| I[Submit to OpenAI\nUpdate Firestore]
+    H -->|No| J[Nack Pub/Sub Message\n(Retry Later)]
+    J --> G
+    I --> K[Track Batch in Firestore]
+    L[Cloud Scheduler] --> M[Periodic Status Check]
+    M --> N[Poll OpenAI for\nIn-Progress Batches]
+    N --> O{Batch Completed/Failed?}
+    O -->|Yes| P[Remove from Firestore\nSubtract Tokens]
+    O -->|No| Q[Leave in Firestore]
+    P --> R[Free Up Tokens for New Batches]
+    R --> G
