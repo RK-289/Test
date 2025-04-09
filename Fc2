@@ -1,0 +1,35 @@
+graph TD
+    A[Start] --> B[User submits GCS URI<br>e.g., via API/Web Form]
+    B --> C[Add GCS URI to Google Pub/Sub Topic]
+    C -->|Queue_Status = 'QUEUED'| D[Worker Triggered by Pub/Sub<br>Cloud Function/Compute Engine]
+    D --> E[List All Files in GCS URI<br>using Google Cloud Storage API]
+    E -->|Store File_Name, File_ID| F[Initialize Empty List:<br>files_with_tokens]
+    F --> G[For Each File:<br>Read Content from GCS]
+    G -->|Queue_Status = 'PROCESSING'| H[Calculate Token Count<br>using Tiktoken (cl100k_base)]
+    H -->|Store Token_Count| I[Add {file, content, token_count}<br>to files_with_tokens]
+    I -->|Loop until all files processed| J[Calculate Total_Tokens =<br>Sum of All Token_Counts]
+    J --> K{Total_Tokens > 300,000,000?}
+    K -->|Yes| L[Split files_with_tokens into Groups<br>Greedy Algorithm]
+    K -->|No| M[Set groups = [files_with_tokens]]
+    L -->|Store Batch_Group_ID| N[For Each Group:<br>Create JSONL File]
+    M --> N
+    N --> O[Write Each File’s Request to JSONL<br>{custom_id, method, url, body}]
+    O --> P[Upload JSONL to OpenAI Files API<br>client.files.create]
+    P --> Q[Create Batch Job<br>client.batches.create]
+    Q --> R{Poll Batch Status<br>client.batches.retrieve}
+    R -->|Status = 'completed'| S[Download Results<br>using output_file_id]
+    R -->|Status = 'failed'| T[Handle Failure<br>Log Error]
+    R -->|Status = 'pending'| U[Wait 60s<br>then Poll Again]
+    U --> R
+    S -->|Store Batch_ID, Batch_Status| V[Move to Next Group]
+    T --> V
+    V -->|Loop until all groups processed| W[Queue_Status = 'PROCESSED']
+    W --> X[End]
+
+    %% Styling
+    classDef process fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef decision fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef storage stroke:#666,stroke-width:1px,stroke-dasharray: 5 5;
+    class A,X process;
+    class K,R decision;
+    class C,E,G,H,I,L,N,P,Q,S,W storage;
